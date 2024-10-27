@@ -2,11 +2,9 @@ package com.musinsa.task.coordination.entity;
 
 import com.musinsa.task.coordination.enums.BrandStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.validator.constraints.Length;
 
 @Getter
 @Builder
@@ -19,18 +17,17 @@ public class Brand extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Length(min = 1, max = 20)
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 20)
     private String name;
 
     @Setter
     @Column(name = "status", nullable = false)
     private BrandStatus status;
 
-    @NotBlank
-    @Min(1)
-    @Max(20)
-    public void setName(String name) {
+    @Column(name = "total_lowest_price")
+    private Long totalLowestPrice;
+
+    public void setName(@NotBlank @Size(min = 1, max = 20) String name) {
         this.name = name;
     }
 }

@@ -2,6 +2,7 @@ package com.musinsa.task.coordination.entity;
 
 import com.musinsa.task.coordination.enums.ProductStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Getter
@@ -14,13 +15,9 @@ public class Product extends BaseEntity {
     @Id
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "price", nullable = false)
     private Long price;
 
-    // standby, activate, stop, remove, block
     @Column(name = "status", nullable = false)
     private ProductStatus status;
 
@@ -31,4 +28,15 @@ public class Product extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    public void setPrice(@Positive Long price) {
+        this.price = price;
+    }
+
+    public void setStatus(ProductStatus status) {
+        if (status.equals(ProductStatus.STANDBY)) {
+            throw new IllegalArgumentException("상품 상태는 STANDBY로 변경할 수 없습니다.");
+        }
+        this.status = status;
+    }
 }
