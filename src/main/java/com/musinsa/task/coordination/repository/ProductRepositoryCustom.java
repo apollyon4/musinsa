@@ -22,12 +22,12 @@ public class ProductRepositoryCustom {
     private final EntityManager entityManager;
     private final JPAQueryFactory jpaQueryFactory;
 
-    public long updateProductActivateToStopByBrandId(Long id) {
+    public long updateProductStatusByBrandId(Long id, ProductStatus before, ProductStatus after) {
         QProduct product = QProduct.product;
         return new JPAUpdateClause(entityManager, product)
                 .where(product.brand.id.eq(id)
-                        .and(product.status.eq(ProductStatus.ACTIVATE)))
-                .set(product.status, ProductStatus.STOP)
+                        .and(product.status.eq(before)))
+                .set(product.status, after)
                 .execute();
     }
 
@@ -129,5 +129,38 @@ public class ProductRepositoryCustom {
                         .build()
                 )
                 .build();
+    }
+
+    public boolean hasProductsInAllCategories(Long brandId) {
+        // 해당 브랜드의 상품이 있는 카테고리 수
+        // 해당 브랜드의 상품을 카테고리별로 그룹화하고 카운트
+        QProduct product = QProduct.product;
+        long countOfCategoriesWithProducts = jpaQueryFactory
+                .select(product.category.id, product.count())
+                .from(product)
+                .where(product.brand.id.eq(brandId)
+                        .and(product.status.in(ProductStatus.BLOCKED, ProductStatus.STANDBY)))
+                .groupBy(product.category.id)
+                .having(product.count().gt(0))
+                .fetch()
+                .size();
+
+        // 전체 카테고리 수를 가져옴
+        long totalCategoryCount = jpaQueryFactory
+                .select(QCategory.category.count())
+                .from(QCategory.category)
+                .fetchOne();
+
+        // 브랜드에 해당하는 상품이 각 카테고리별로 최소 하나씩 있는지 확인
+        return countOfCategoriesWithProducts == totalCategoryCount;
+    }
+
+    public long removeProductsByBrandId(Long id) {
+        QProduct product = QProduct.product;
+        return jpaQueryFactory
+                .update(product)
+                .set(product.status, ProductStatus.REMOVED)
+                .where(product.brand.id.eq(id))
+                .execute();
     }
 }

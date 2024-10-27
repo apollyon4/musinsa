@@ -22,6 +22,7 @@ public class Brand extends BaseEntity {
 
     @Setter
     @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
     private BrandStatus status;
 
     @Column(name = "total_lowest_price")

@@ -8,17 +8,19 @@ import lombok.*;
 @Getter
 @Builder
 @Entity
-@Table(name = "product")
+@Table(name = "PRODUCT")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product extends BaseEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "price", nullable = false)
     private Long price;
 
     @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
     @ManyToOne

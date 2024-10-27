@@ -1,5 +1,6 @@
 package com.musinsa.task.coordination.dto.res;
 
+import com.musinsa.task.coordination.enums.ProductStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,4 +12,5 @@ public class ProductResponseDto {
     private String categoryName;
     private String brandName;
     private Long price;
+    private ProductStatus status;
 }

@@ -6,10 +6,14 @@ import com.musinsa.task.coordination.dto.res.CategoryLowestHighestProductRespons
 import com.musinsa.task.coordination.dto.res.LowestBrandProductsResponseDto;
 import com.musinsa.task.coordination.dto.res.ProductListResponseDto;
 import com.musinsa.task.coordination.dto.res.ProductResponseDto;
+import com.musinsa.task.coordination.enums.ProductStatus;
 import com.musinsa.task.coordination.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/product")
@@ -37,12 +41,12 @@ public class ProductController {
 
     // 구현4-2) 상품을 추가 / 업데이트 / 삭제하는 API
     @PostMapping("")
-    public ResponseEntity<ProductResponseDto> addProduct(CreateProductDto createProductDto) {
+    public ResponseEntity<ProductResponseDto> addProduct(@Valid @RequestBody CreateProductDto createProductDto) {
         return ResponseEntity.ok(productService.addProduct(createProductDto));
     }
 
     @PutMapping("/{productId}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable("productId") Long productId, UpdateProductDto updateProductDto) {
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable("productId") Long productId, @RequestBody UpdateProductDto updateProductDto) {
         updateProductDto.setId(productId);
         return ResponseEntity.ok(productService.updateProduct(updateProductDto));
     }
@@ -51,5 +55,22 @@ public class ProductController {
     public ResponseEntity<String> deleteProduct(@PathVariable("productId") Long productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok("success");
+    }
+
+    // 상태 변경 API
+    @PutMapping("/{productId}/status")
+    public ResponseEntity<ProductResponseDto> changeProductStatus(@PathVariable("productId") Long productId, @RequestBody ProductStatus status) {
+        return ResponseEntity.ok(productService.changeProductStatus(productId, status));
+    }
+
+    // 상품 조회 API (test 용)
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable("productId") Long productId) {
+        return ResponseEntity.ok(productService.getProduct(productId));
+    }
+
+    @GetMapping("")
+    public ResponseEntity<List<ProductResponseDto>> getProducts() {
+        return ResponseEntity.ok(productService.getProducts());
     }
 }

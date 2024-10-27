@@ -7,9 +7,14 @@ spring:
       mode: always
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         show_sql: true
         format_sql: true
+    defer-datasource-initialization: true
+
+  mvc:
+    path-match:
+      matching-strategy: ant_path_matcher
