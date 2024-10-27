@@ -3,6 +3,7 @@ package com.musinsa.task.coordination.entity;
 import com.musinsa.task.coordination.enums.BrandStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -20,7 +21,6 @@ public class Brand extends BaseEntity {
     @Column(name = "name", nullable = false, length = 20)
     private String name;
 
-    @Setter
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private BrandStatus status;
@@ -30,5 +30,21 @@ public class Brand extends BaseEntity {
 
     public void setName(@NotBlank @Size(min = 1, max = 20) String name) {
         this.name = name;
+    }
+
+    public void setTotalLowestPrice(@Positive Long totalLowestPrice) {
+        this.totalLowestPrice = totalLowestPrice;
+    }
+
+    public void changeStatus(BrandStatus status) {
+        if (this.status == status) {
+            return;
+        }
+        
+        if (!this.status.isMoveable(status)) {
+            throw new IllegalArgumentException("요청한 상태로 변경 불가능합니다.");
+        }
+
+        this.status = status;
     }
 }

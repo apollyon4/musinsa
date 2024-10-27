@@ -1,5 +1,6 @@
 package com.musinsa.task.coordination.entity;
 
+import com.musinsa.task.coordination.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,4 +21,12 @@ public class Category extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lowest_product_id")
     private Product lowestProduct;
+
+    public void checkLowestProduct(Product product) {
+        if (this.lowestProduct == null || ProductStatus.REMOVED.equals(lowestProduct.getStatus())) {
+            this.lowestProduct = product;
+        } else if (this.lowestProduct.getPrice() > product.getPrice()) {
+            this.lowestProduct = product;
+        }
+    }
 }

@@ -35,9 +35,9 @@ public class Product extends BaseEntity {
         this.price = price;
     }
 
-    public void setStatus(ProductStatus status) {
-        if (status.equals(ProductStatus.STANDBY)) {
-            throw new IllegalArgumentException("상품 상태는 STANDBY로 변경할 수 없습니다.");
+    public void changeStatus(ProductStatus status) {
+        if (!this.status.isMoveable(status)) {
+            throw new IllegalArgumentException("요청한 상태로 변경 불가능합니다.");
         }
         this.status = status;
     }

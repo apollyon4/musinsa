@@ -4,9 +4,11 @@ import com.musinsa.task.coordination.dto.req.CreateBrandDto;
 import com.musinsa.task.coordination.dto.req.UpdateBrandDto;
 import com.musinsa.task.coordination.dto.res.BrandResponseDto;
 import com.musinsa.task.coordination.entity.Brand;
+import com.musinsa.task.coordination.entity.Product;
 import com.musinsa.task.coordination.enums.BrandStatus;
 import com.musinsa.task.coordination.enums.ProductStatus;
 import com.musinsa.task.coordination.repository.BrandRepository;
+import com.musinsa.task.coordination.repository.ProductRepository;
 import com.musinsa.task.coordination.repository.ProductRepositoryCustom;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -18,9 +20,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BrandService {
-
     private final BrandRepository brandRepository;
     private final ProductRepositoryCustom productRepositoryCustom;
+    private final ProductRepository productRepository;
 
     public BrandResponseDto addBrand(CreateBrandDto createBrandDto) {
         Brand brand = brandRepository.save(Brand.builder()
@@ -44,7 +46,7 @@ public class BrandService {
             brand.setName(updateBrandDto.getName());
         }
         if (ObjectUtils.isNotEmpty(updateBrandDto.getStatus())) {
-            changeStatus(brand, updateBrandDto.getStatus());
+            this.changeStatus(brand, updateBrandDto.getStatus());
         }
         return BrandResponseDto.from(brandRepository.save(brand));
     }
@@ -53,30 +55,44 @@ public class BrandService {
     public void deleteBrand(Long brandId) {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 브랜드가 존재하지 않습니다."));
-        changeStatus(brand, BrandStatus.REMOVED);
+        this.changeStatus(brand, BrandStatus.REMOVED);
         brandRepository.save(brand);
     }
 
-    private void changeStatus(Brand brand, BrandStatus status) {
-        if (!brand.getStatus().isMoveable(status)) {
-            throw new IllegalArgumentException("요청한 상태로 변경 불가능합니다.");
-        }
+    public void changeStatus(Brand brand, BrandStatus status) {
+        brand.changeStatus(status);
 
-        if (BrandStatus.ACTIVATE.equals(status)) {
+        if (BrandStatus.ACTIVATED.equals(status)) {
             if (!productRepositoryCustom.hasProductsInAllCategories(brand.getId())) {
                 throw new IllegalArgumentException("모든 카테고리에 상품이 등록되어 있어야 합니다.");
             }
-            // change product if stop -> activate
-            productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.BLOCKED, ProductStatus.ACTIVATE);
-            productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.STANDBY, ProductStatus.ACTIVATE);
-        } else if (BrandStatus.STOP.equals(status)) {
-            // change product if activate -> blocked
-            productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.ACTIVATE, ProductStatus.BLOCKED);
+            productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.STANDBY, ProductStatus.ACTIVATED);
+            List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);
+            // 카테고리별 가장 낮은 금액을 가진 상품을 조회하고 그 상품의 총합을 세팅하는 쿼리
+            brand.setTotalLowestPrice(lowestProducts.stream()
+                    .map(Product::getPrice)
+                    .reduce(0L, Long::sum));
+
+            // 카테고리별 최저 금액 상품을 갱신하는 쿼리
+            lowestProducts.forEach(
+                    product -> product.getCategory().checkLowestProduct(product)
+            );
         } else if (BrandStatus.REMOVED.equals(status)) {
-            // change all products to removed
             productRepositoryCustom.removeProductsByBrandId(brand.getId());
+            List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);
+            // 카테고리별 최저 금액 상품을 갱신하는 쿼리
+            lowestProducts.forEach(
+                    product -> {
+                        if (!product.getCategory().getLowestProduct().equals(product)) {
+                            return;
+                        }
+                        productRepository.findFirstByCategoryAndStatusOrderByPriceAsc(product.getCategory(), ProductStatus.ACTIVATED)
+                                .ifPresent(lowestProduct ->
+                                        product.getCategory().checkLowestProduct(lowestProduct)
+                                );
+                    }
+            );
         }
-        brand.setStatus(status);
     }
 
     public List<BrandResponseDto> getBrands() {
