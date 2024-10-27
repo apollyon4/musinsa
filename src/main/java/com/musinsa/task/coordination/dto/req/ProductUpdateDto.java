@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UpdateProductDto {
+public class ProductUpdateDto {
     private Long id;
     @PositiveOrZero
     private Long price;

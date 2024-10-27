@@ -1,6 +1,7 @@
 package com.musinsa.task.coordination.entity;
 
 import com.musinsa.task.coordination.enums.BrandStatus;
+import com.musinsa.task.coordination.error.exception.BrandStateNotAllowedException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -40,9 +41,9 @@ public class Brand extends BaseEntity {
         if (this.status == status) {
             return;
         }
-        
+
         if (!this.status.isMoveable(status)) {
-            throw new IllegalArgumentException("요청한 상태로 변경 불가능합니다.");
+            throw new BrandStateNotAllowedException(this.status.name(), status.name());
         }
 
         this.status = status;

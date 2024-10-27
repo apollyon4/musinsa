@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CreateBrandDto {
+public class BrandCreateDto {
     @NotNull
     private String name;
 }

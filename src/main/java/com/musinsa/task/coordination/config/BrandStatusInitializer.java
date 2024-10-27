@@ -2,6 +2,7 @@ package com.musinsa.task.coordination.config;
 
 import com.musinsa.task.coordination.entity.Brand;
 import com.musinsa.task.coordination.enums.BrandStatus;
+import com.musinsa.task.coordination.error.exception.MissingCategoryProductException;
 import com.musinsa.task.coordination.repository.BrandRepository;
 import com.musinsa.task.coordination.service.BrandService;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,12 @@ public class BrandStatusInitializer implements ApplicationListener<ApplicationRe
     @Override
     @Transactional
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        log.info("init");
         List<Brand> brands = brandRepository.findAll();
         for (Brand brand : brands) {
             try {
                 brandService.changeStatus(brand, BrandStatus.ACTIVATED);
-            } catch (IllegalArgumentException e) {
-                log.error("브랜드 상태 변경 실패: {}", e.getMessage());
+            } catch (MissingCategoryProductException e) {
+                log.error(e.getMessage());
             }
         }
     }

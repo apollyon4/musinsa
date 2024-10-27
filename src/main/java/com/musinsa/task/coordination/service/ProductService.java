@@ -1,7 +1,7 @@
 package com.musinsa.task.coordination.service;
 
-import com.musinsa.task.coordination.dto.req.CreateProductDto;
-import com.musinsa.task.coordination.dto.req.UpdateProductDto;
+import com.musinsa.task.coordination.dto.req.ProductCreateDto;
+import com.musinsa.task.coordination.dto.req.ProductUpdateDto;
 import com.musinsa.task.coordination.dto.res.CategoryPriceRangeResponseDto;
 import com.musinsa.task.coordination.dto.res.LowestPriceStyleResponseDto;
 import com.musinsa.task.coordination.dto.res.ProductListResponseDto;
@@ -11,6 +11,7 @@ import com.musinsa.task.coordination.entity.Category;
 import com.musinsa.task.coordination.entity.Product;
 import com.musinsa.task.coordination.enums.BrandStatus;
 import com.musinsa.task.coordination.enums.ProductStatus;
+import com.musinsa.task.coordination.error.exception.*;
 import com.musinsa.task.coordination.repository.BrandRepository;
 import com.musinsa.task.coordination.repository.CategoryRepository;
 import com.musinsa.task.coordination.repository.ProductRepository;
@@ -46,11 +47,11 @@ public class ProductService {
 
     public CategoryPriceRangeResponseDto getLowestHighestByCategoryProducts(String categoryName) {
         Category category = categoryRepository.findByName(categoryName)
-                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다."));
+                .orElseThrow(() -> new CategoryNotFoundException(categoryName));
         Product lowestProduct = productRepository.findFirstByCategoryAndStatusOrderByPriceAsc(category, ProductStatus.ACTIVATED)
-                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리에 상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new CategoryHasNoProductsException(categoryName));
         Product highestProduct = productRepository.findFirstByCategoryAndStatusOrderByPriceDesc(category, ProductStatus.ACTIVATED)
-                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리에 상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new CategoryHasNoProductsException(categoryName));
 
         CategoryPriceRangeResponseDto responseDto = new CategoryPriceRangeResponseDto();
         responseDto.setCategoryName(category.getName());
@@ -65,11 +66,11 @@ public class ProductService {
         return responseDto;
     }
 
-    public ProductResponseDto addProduct(CreateProductDto createProductDto) {
+    public ProductResponseDto addProduct(ProductCreateDto productCreateDto) {
         Product product = productRepository.save(Product.builder()
-                .price(createProductDto.getPrice())
-                .category(categoryRepository.getReferenceById(createProductDto.getCategoryId()))
-                .brand(brandRepository.getReferenceById(createProductDto.getBrandId()))
+                .price(productCreateDto.getPrice())
+                .category(categoryRepository.getReferenceById(productCreateDto.getCategoryId()))
+                .brand(brandRepository.getReferenceById(productCreateDto.getBrandId()))
                 .status(ProductStatus.STANDBY)
                 .build());
         return ProductResponseDto.builder()
@@ -80,15 +81,15 @@ public class ProductService {
                 .build();
     }
 
-    public ProductResponseDto updateProduct(UpdateProductDto updateProductDto) {
-        Product product = productRepository.findById(updateProductDto.getId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
+    public ProductResponseDto updateProduct(ProductUpdateDto productUpdateDto) {
+        Product product = productRepository.findById(productUpdateDto.getId())
+                .orElseThrow(() -> new ProductNotFoundException(productUpdateDto.getId()));
 
-        if (updateProductDto.getPrice() != null) {
-            product.setPrice(updateProductDto.getPrice());
+        if (productUpdateDto.getPrice() != null) {
+            product.setPrice(productUpdateDto.getPrice());
         }
-        if (updateProductDto.getStatus() != null) {
-            this.changeStatus(product, updateProductDto.getStatus());
+        if (productUpdateDto.getStatus() != null) {
+            this.changeStatus(product, productUpdateDto.getStatus());
         }
         return ProductResponseDto.builder()
                 .id(product.getId())
@@ -100,14 +101,14 @@ public class ProductService {
 
     public void deleteProduct(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new ProductNotFoundException(productId));
         this.changeStatus(product, ProductStatus.REMOVED);
         productRepository.save(product);
     }
 
     public ProductResponseDto changeProductStatus(Long productId, ProductStatus status) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new ProductNotFoundException(productId));
         this.changeStatus(product, status);
         return ProductResponseDto.builder()
                 .id(product.getId())
@@ -119,7 +120,7 @@ public class ProductService {
 
     public ProductResponseDto getProduct(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new ProductNotFoundException(productId));
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .price(product.getPrice())
@@ -143,12 +144,12 @@ public class ProductService {
     private void changeStatus(Product product, ProductStatus status) {
         if (ProductStatus.ACTIVATED.equals(status)) {
             if (!BrandStatus.ACTIVATED.equals(product.getBrand().getStatus())) {
-                throw new IllegalArgumentException("브랜드가 활성화 상태여야 합니다.");
+                throw new BrandNotActiveException(product.getBrand().getId());
             }
         } else if (ProductStatus.REMOVED.equals(status)) {
             long count = productRepository.countByBrandAndCategory(product.getBrand(), product.getCategory());
             if (count <= 1) {
-                throw new IllegalArgumentException("브랜드의 카테고리에 최소 하나의 상품이 활성화되어 있어야 합니다.");
+                throw new LastProductInBrandCategoryException(product.getBrand().getId(), product.getCategory().getId());
             }
         }
         product.changeStatus(status);

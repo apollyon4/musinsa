@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CreateProductDto {
+public class ProductCreateDto {
     @PositiveOrZero
     private Long price;
     private Long brandId;

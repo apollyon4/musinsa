@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UpdateBrandDto {
+public class BrandUpdateDto {
     private Long id;
     private String name;
     private BrandStatus status;

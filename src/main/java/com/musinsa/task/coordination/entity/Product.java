@@ -1,6 +1,7 @@
 package com.musinsa.task.coordination.entity;
 
 import com.musinsa.task.coordination.enums.ProductStatus;
+import com.musinsa.task.coordination.error.exception.ProductStateNotAllowedException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
@@ -37,7 +38,7 @@ public class Product extends BaseEntity {
 
     public void changeStatus(ProductStatus status) {
         if (!this.status.isMoveable(status)) {
-            throw new IllegalArgumentException("요청한 상태로 변경 불가능합니다.");
+            throw new ProductStateNotAllowedException(this.status.name(), status.name());
         }
         this.status = status;
     }

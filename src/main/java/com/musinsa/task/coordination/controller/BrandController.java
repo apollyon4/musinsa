@@ -1,7 +1,7 @@
 package com.musinsa.task.coordination.controller;
 
-import com.musinsa.task.coordination.dto.req.CreateBrandDto;
-import com.musinsa.task.coordination.dto.req.UpdateBrandDto;
+import com.musinsa.task.coordination.dto.req.BrandCreateDto;
+import com.musinsa.task.coordination.dto.req.BrandUpdateDto;
 import com.musinsa.task.coordination.dto.res.BrandResponseDto;
 import com.musinsa.task.coordination.service.BrandService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,15 +19,15 @@ public class BrandController {
 
     @Operation(summary = "구현4) 브랜드 추가 API")
     @PostMapping("")
-    public ResponseEntity<BrandResponseDto> addBrand(@RequestBody CreateBrandDto createBrandDto) {
-        return ResponseEntity.ok(brandService.addBrand(createBrandDto));
+    public ResponseEntity<BrandResponseDto> addBrand(@RequestBody BrandCreateDto brandCreateDto) {
+        return ResponseEntity.ok(brandService.addBrand(brandCreateDto));
     }
 
     @Operation(summary = "구현4) 브랜드 업데이트 API")
     @PutMapping("/{brandId}")
-    public ResponseEntity<BrandResponseDto> updateBrand(@PathVariable("brandId") Long brandId, @RequestBody UpdateBrandDto updateBrandDto) {
-        updateBrandDto.setId(brandId);
-        return ResponseEntity.ok(brandService.updateBrand(updateBrandDto));
+    public ResponseEntity<BrandResponseDto> updateBrand(@PathVariable("brandId") Long brandId, @RequestBody BrandUpdateDto brandUpdateDto) {
+        brandUpdateDto.setId(brandId);
+        return ResponseEntity.ok(brandService.updateBrand(brandUpdateDto));
     }
 
     @Operation(summary = "구현4) 브랜드 삭제 API")

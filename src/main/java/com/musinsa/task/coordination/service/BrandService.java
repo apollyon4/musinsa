@@ -1,12 +1,14 @@
 package com.musinsa.task.coordination.service;
 
-import com.musinsa.task.coordination.dto.req.CreateBrandDto;
-import com.musinsa.task.coordination.dto.req.UpdateBrandDto;
+import com.musinsa.task.coordination.dto.req.BrandCreateDto;
+import com.musinsa.task.coordination.dto.req.BrandUpdateDto;
 import com.musinsa.task.coordination.dto.res.BrandResponseDto;
 import com.musinsa.task.coordination.entity.Brand;
 import com.musinsa.task.coordination.entity.Product;
 import com.musinsa.task.coordination.enums.BrandStatus;
 import com.musinsa.task.coordination.enums.ProductStatus;
+import com.musinsa.task.coordination.error.exception.BrandNotFoundException;
+import com.musinsa.task.coordination.error.exception.MissingCategoryProductException;
 import com.musinsa.task.coordination.repository.BrandRepository;
 import com.musinsa.task.coordination.repository.ProductRepository;
 import com.musinsa.task.coordination.repository.ProductRepositoryCustom;
@@ -24,9 +26,9 @@ public class BrandService {
     private final ProductRepositoryCustom productRepositoryCustom;
     private final ProductRepository productRepository;
 
-    public BrandResponseDto addBrand(CreateBrandDto createBrandDto) {
+    public BrandResponseDto addBrand(BrandCreateDto brandCreateDto) {
         Brand brand = brandRepository.save(Brand.builder()
-                .name(createBrandDto.getName())
+                .name(brandCreateDto.getName())
                 .status(BrandStatus.STANDBY)
                 .build());
         brand = brandRepository.save(brand);
@@ -34,19 +36,15 @@ public class BrandService {
     }
 
     @Transactional
-    public BrandResponseDto updateBrand(UpdateBrandDto updateBrandDto) {
-        if (BrandStatus.STANDBY.equals(updateBrandDto.getStatus())) {
-            throw new IllegalArgumentException("STANDBY 상태로 변경할 수 없습니다.");
-        }
+    public BrandResponseDto updateBrand(BrandUpdateDto brandUpdateDto) {
+        Brand brand = brandRepository.findById(brandUpdateDto.getId())
+                .orElseThrow(() -> new BrandNotFoundException(brandUpdateDto.getId()));
 
-        Brand brand = brandRepository.findById(updateBrandDto.getId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 브랜드가 존재하지 않습니다."));
-
-        if (ObjectUtils.isNotEmpty(updateBrandDto.getName())) {
-            brand.setName(updateBrandDto.getName());
+        if (ObjectUtils.isNotEmpty(brandUpdateDto.getName())) {
+            brand.setName(brandUpdateDto.getName());
         }
-        if (ObjectUtils.isNotEmpty(updateBrandDto.getStatus())) {
-            this.changeStatus(brand, updateBrandDto.getStatus());
+        if (ObjectUtils.isNotEmpty(brandUpdateDto.getStatus())) {
+            this.changeStatus(brand, brandUpdateDto.getStatus());
         }
         return BrandResponseDto.from(brandRepository.save(brand));
     }
@@ -54,7 +52,7 @@ public class BrandService {
     @Transactional
     public void deleteBrand(Long brandId) {
         Brand brand = brandRepository.findById(brandId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 브랜드가 존재하지 않습니다."));
+                .orElseThrow(() -> new BrandNotFoundException(brandId));
         this.changeStatus(brand, BrandStatus.REMOVED);
         brandRepository.save(brand);
     }
@@ -64,7 +62,7 @@ public class BrandService {
 
         if (BrandStatus.ACTIVATED.equals(status)) {
             if (!productRepositoryCustom.hasProductsInAllCategories(brand.getId())) {
-                throw new IllegalArgumentException("모든 카테고리에 상품이 등록되어 있어야 합니다.");
+                throw new MissingCategoryProductException(brand.getId());
             }
             productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.STANDBY, ProductStatus.ACTIVATED);
             List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);
@@ -105,6 +103,6 @@ public class BrandService {
 
     public BrandResponseDto getBrand(Long brandId) {
         return BrandResponseDto.from(brandRepository.findById(brandId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 브랜드가 존재하지 않습니다.")));
+                .orElseThrow(() -> new BrandNotFoundException(brandId)));
     }
 }

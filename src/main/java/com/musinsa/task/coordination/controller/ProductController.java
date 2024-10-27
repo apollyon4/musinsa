@@ -1,7 +1,7 @@
 package com.musinsa.task.coordination.controller;
 
-import com.musinsa.task.coordination.dto.req.CreateProductDto;
-import com.musinsa.task.coordination.dto.req.UpdateProductDto;
+import com.musinsa.task.coordination.dto.req.ProductCreateDto;
+import com.musinsa.task.coordination.dto.req.ProductUpdateDto;
 import com.musinsa.task.coordination.dto.res.CategoryPriceRangeResponseDto;
 import com.musinsa.task.coordination.dto.res.LowestPriceStyleResponseDto;
 import com.musinsa.task.coordination.dto.res.ProductListResponseDto;
@@ -42,15 +42,15 @@ public class ProductController {
 
     @Operation(summary = "구현4) 상품을 추가하는 API")
     @PostMapping("")
-    public ResponseEntity<ProductResponseDto> addProduct(@Valid @RequestBody CreateProductDto createProductDto) {
-        return ResponseEntity.ok(productService.addProduct(createProductDto));
+    public ResponseEntity<ProductResponseDto> addProduct(@Valid @RequestBody ProductCreateDto productCreateDto) {
+        return ResponseEntity.ok(productService.addProduct(productCreateDto));
     }
 
     @Operation(summary = "구현4) 상품을 업데이트하는 API")
     @PutMapping("/{productId}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable("productId") Long productId, @RequestBody UpdateProductDto updateProductDto) {
-        updateProductDto.setId(productId);
-        return ResponseEntity.ok(productService.updateProduct(updateProductDto));
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable("productId") Long productId, @RequestBody ProductUpdateDto productUpdateDto) {
+        productUpdateDto.setId(productId);
+        return ResponseEntity.ok(productService.updateProduct(productUpdateDto));
     }
 
     @Operation(summary = "구현4) 상품을 삭제하는 API")

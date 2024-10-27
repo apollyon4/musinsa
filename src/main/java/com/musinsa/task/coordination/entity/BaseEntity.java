@@ -10,7 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 @MappedSuperclass
 public abstract class BaseEntity {
     @CreatedDate
-    @Column(name = "create_at", updatable = false)
+    @Column(name = "created_at", updatable = false)
     private long createdAt;
 
     @Column(name = "modified_at")
