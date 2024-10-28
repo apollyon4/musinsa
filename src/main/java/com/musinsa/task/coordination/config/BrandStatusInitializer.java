@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * data.sql 파일을 통해 초기 데이터를 삽입하였기에 서버 로딩 시점에 해당 데이터를 기반으로 최저가 조건을 갱신합니다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

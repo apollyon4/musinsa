@@ -21,6 +21,7 @@ public class Category extends BaseEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    // 카테고리의 최저가 상품
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lowest_product_id")
     private Product lowestProduct;

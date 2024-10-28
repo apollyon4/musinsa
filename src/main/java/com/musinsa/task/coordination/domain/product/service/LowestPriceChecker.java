@@ -17,14 +17,19 @@ public class LowestPriceChecker {
     private final ProductRepository productRepository;
     private final ProductRepositoryCustom productRepositoryCustom;
 
+    /**
+     * 변경된 상품의 브랜드 최저가를 갱신하는 메서드
+     */
     public void updateBrandLowestProducts(Product product) {
-        // 브랜드별 최저가 상품 확인 및 업데이트
         List<Product> products = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(product.getBrand());
         product.getBrand().setTotalLowestPrice(
                 products.stream().map(Product::getPrice).reduce(0L, Long::sum)
         );
     }
 
+    /**
+     * 변경된 상품의 카테고리 최저가를 갱신하는 메서드
+     */
     public void updateCategoryLowestProduct(Product product) {
         if (ProductStatus.REMOVED.equals(product.getCategory().getLowestProduct().getStatus()) ||
                 ObjectUtils.notEqual(product.getCategory().getLowestProduct(), (product))) {

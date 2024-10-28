@@ -27,6 +27,7 @@ public class Brand extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private BrandStatus status;
 
+    // 해당 브랜드의 카테고리별 최저가 상품의 총합
     @Column(name = "total_lowest_price")
     private Long totalLowestPrice;
 
