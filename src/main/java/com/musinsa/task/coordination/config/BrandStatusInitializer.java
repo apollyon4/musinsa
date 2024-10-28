@@ -1,10 +1,10 @@
 package com.musinsa.task.coordination.config;
 
-import com.musinsa.task.coordination.entity.Brand;
-import com.musinsa.task.coordination.enums.BrandStatus;
-import com.musinsa.task.coordination.error.exception.MissingCategoryProductException;
-import com.musinsa.task.coordination.repository.BrandRepository;
-import com.musinsa.task.coordination.service.BrandService;
+import com.musinsa.task.coordination.domain.brand.entity.Brand;
+import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
+import com.musinsa.task.coordination.domain.brand.exception.MissingCategoryProductException;
+import com.musinsa.task.coordination.domain.brand.repository.BrandRepository;
+import com.musinsa.task.coordination.domain.brand.service.BrandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
