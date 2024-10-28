@@ -13,7 +13,9 @@ public class BrandResponseDto {
         BrandResponseDto brandResponseDto = new BrandResponseDto();
         brandResponseDto.id = brand.getId();
         brandResponseDto.name = brand.getName();
-        brandResponseDto.status = brand.getStatus().name();
+        if (brand.getStatus() != null) {
+            brandResponseDto.status = brand.getStatus().name();
+        }
         return brandResponseDto;
     }
 }

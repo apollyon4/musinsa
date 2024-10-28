@@ -9,6 +9,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 
+import java.util.Objects;
+
 @Getter
 @Builder
 @Entity
@@ -45,5 +47,12 @@ public class Product extends BaseEntity {
         }
 
         this.status = status;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return Objects.equals(this.id, ((Product) o).id);
     }
 }

@@ -5,7 +5,6 @@ import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
 import com.musinsa.task.coordination.domain.category.entity.Category;
 import com.musinsa.task.coordination.domain.product.entity.Product;
 import com.musinsa.task.coordination.domain.product.enums.ProductStatus;
-import com.musinsa.task.coordination.domain.product.repository.ProductRepository;
 import com.musinsa.task.coordination.domain.product.repository.ProductRepositoryCustom;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +24,6 @@ public class LowestPriceCheckerTest {
     private LowestPriceChecker lowestPriceChecker;
 
     @Mock
-    private ProductRepository productRepository;
-
-    @Mock
     private ProductRepositoryCustom productRepositoryCustom;
 
     @Test
@@ -43,7 +39,7 @@ public class LowestPriceCheckerTest {
                 .status(ProductStatus.ACTIVATED)
                 .build();
         category.checkLowestProduct(product);
-        
+
         lowestPriceChecker.updateBrandLowestProducts(product);
         assertEquals(product, category.getLowestProduct());
     }

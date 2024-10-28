@@ -18,6 +18,7 @@ import com.musinsa.task.coordination.domain.product.exception.ProductNotFoundExc
 import com.musinsa.task.coordination.domain.product.repository.ProductRepository;
 import com.musinsa.task.coordination.domain.product.repository.ProductRepositoryCustom;
 import com.musinsa.task.coordination.error.exception.CategoryNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,28 +48,32 @@ public class ProductServiceTest {
     @Mock
     private ProductStatusManager productStatusManager;
 
-    Category[] categories = {
-            Category.builder().id(1L).name("category1").build(),
-            Category.builder().id(2L).name("category2").build()
-    };
+    Category[] categories;
 
-    Brand[] brands = {
-            Brand.builder().id(1L).name("brand1").status(BrandStatus.ACTIVATED).build(),
-            Brand.builder().id(2L).name("brand2").status(BrandStatus.ACTIVATED).build()
-    };
+    Brand[] brands;
 
-    Product[] products = {
-            Product.builder().id(1L).price(1000L).category(categories[0]).brand(brands[0]).status(ProductStatus.ACTIVATED).build(),
-            Product.builder().id(2L).price(2000L).category(categories[1]).brand(brands[0]).status(ProductStatus.ACTIVATED).build(),
-            Product.builder().id(3L).price(3000L).category(categories[0]).brand(brands[1]).status(ProductStatus.ACTIVATED).build(),
-            Product.builder().id(4L).price(4000L).category(categories[1]).brand(brands[1]).status(ProductStatus.ACTIVATED).build()
-    };
+    Product[] products;
 
-    {
+    @BeforeEach
+    void setUp() {
+        categories = new Category[]{
+                Category.builder().id(1L).name("category1").build(),
+                Category.builder().id(2L).name("category2").build()
+        };
+        brands = new Brand[]{
+                Brand.builder().id(1L).name("brand1").status(BrandStatus.ACTIVATED).build(),
+                Brand.builder().id(2L).name("brand2").status(BrandStatus.ACTIVATED).build()
+        };
+        products = new Product[]{
+                Product.builder().id(1L).price(1000L).category(categories[0]).brand(brands[0]).status(ProductStatus.ACTIVATED).build(),
+                Product.builder().id(2L).price(2000L).category(categories[1]).brand(brands[0]).status(ProductStatus.ACTIVATED).build(),
+                Product.builder().id(3L).price(3000L).category(categories[0]).brand(brands[1]).status(ProductStatus.ACTIVATED).build(),
+                Product.builder().id(4L).price(4000L).category(categories[1]).brand(brands[1]).status(ProductStatus.ACTIVATED).build()
+        };
+        
         categories[0].checkLowestProduct(products[0]);
         categories[1].checkLowestProduct(products[1]);
     }
-
 
     @Test
     void testGetLowestPerCategoryProducts_success() {

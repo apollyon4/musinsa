@@ -16,10 +16,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 상품 상태 변경 및 제약 조건을 관리하는 클래스
+ * 상품 상태 전이 : STANDBY -> ACTIVATED -> REMOVED
+ * STANDBY : 상품 생성 초기값
+ * - 전이 조건 : 브랜드 활성화된 경우
+ * ACTIVATED : 브랜드 활성화 시 수행됨
+ * - 전이 조건 : 브랜드 내에 삭제하려는 상품이 둘 이상 남아 있을 경우
+ */
 @Component
 @RequiredArgsConstructor
 public class ProductStatusManager {
-
     private final LowestPriceChecker lowestPriceChecker;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
@@ -37,9 +44,11 @@ public class ProductStatusManager {
 
     public void removeProduct(Product product) {
         updateStatusAndConstraints(product, ProductStatus.REMOVED);
-        productRepository.save(product);
     }
 
+    /**
+     * 상품 상태 변경 및 제약 조건을 업데이트
+     */
     private void updateStatusAndConstraints(Product product, ProductStatus status) {
         if (status == ProductStatus.ACTIVATED && product.getBrand().getStatus() != BrandStatus.ACTIVATED) {
             throw new BrandNotActiveException(product.getBrand().getId());
@@ -57,6 +66,11 @@ public class ProductStatusManager {
         lowestPriceChecker.updateCategoryLowestProduct(product);
     }
 
+    /**
+     * 브랜드 활성화 후 브랜드 내의 상품들로 조회용 데이터를 갱신
+     *
+     * @param brand
+     */
     public void updateConstraintAfterActivateBrand(Brand brand) {
         // 전체 카테고리 수를 가져옴
         long totalCategoryCount = categoryRepository.count();
@@ -77,6 +91,11 @@ public class ProductStatusManager {
         lowestProducts.forEach(product -> product.getCategory().checkLowestProduct(product));
     }
 
+    /**
+     * 상품 제거 후, 제거된 상품이 최저 금액인지 여부를 갱신
+     *
+     * @param brand
+     */
     public void updateConstraintAfterRemoveBrand(Brand brand) {
         productRepositoryCustom.removeProductsByBrandId(brand.getId());
         List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);

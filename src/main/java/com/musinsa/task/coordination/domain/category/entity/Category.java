@@ -26,7 +26,7 @@ public class Category extends BaseEntity {
     private Product lowestProduct;
 
     public void checkLowestProduct(Product product) {
-        if (product.getCategory().getId() != this.id) {
+        if (!product.getCategory().getId().equals(this.id) || !ProductStatus.ACTIVATED.equals(product.getStatus())) {
             throw new InvalidLowestProductException();
         }
         if (this.lowestProduct == null || ProductStatus.REMOVED.equals(lowestProduct.getStatus())) {

@@ -7,8 +7,6 @@ import com.musinsa.task.coordination.domain.brand.entity.Brand;
 import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
 import com.musinsa.task.coordination.domain.brand.exception.BrandNotFoundException;
 import com.musinsa.task.coordination.domain.brand.repository.BrandRepository;
-import com.musinsa.task.coordination.domain.product.repository.ProductRepository;
-import com.musinsa.task.coordination.domain.product.repository.ProductRepositoryCustom;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
@@ -21,15 +19,12 @@ import java.util.List;
 public class BrandService {
     private final BrandRepository brandRepository;
     private final BrandStatusManager brandStatusManager;
-    private final ProductRepositoryCustom productRepositoryCustom;
-    private final ProductRepository productRepository;
 
     public BrandResponseDto addBrand(BrandCreateDto brandCreateDto) {
         Brand brand = brandRepository.save(Brand.builder()
                 .name(brandCreateDto.getName())
                 .status(BrandStatus.STANDBY)
                 .build());
-        brand = brandRepository.save(brand);
         return BrandResponseDto.from(brand);
     }
 
@@ -52,7 +47,6 @@ public class BrandService {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new BrandNotFoundException(brandId));
         brandStatusManager.changeStatus(brand, BrandStatus.REMOVED);
-        brandRepository.save(brand);
     }
 
     public List<BrandResponseDto> getBrands() {
