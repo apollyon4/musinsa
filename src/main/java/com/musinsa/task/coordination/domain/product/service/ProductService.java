@@ -72,6 +72,7 @@ public class ProductService {
         return ProductResponseDto.from(product);
     }
 
+    @Transactional
     public ProductResponseDto updateProduct(ProductUpdateDto productUpdateDto) {
         Product product = productRepository.findById(productUpdateDto.getId())
                 .orElseThrow(() -> new ProductNotFoundException(productUpdateDto.getId()));

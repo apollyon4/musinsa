@@ -7,7 +7,6 @@ import com.musinsa.task.coordination.domain.category.entity.QCategory;
 import com.musinsa.task.coordination.domain.product.entity.Product;
 import com.musinsa.task.coordination.domain.product.entity.QProduct;
 import com.musinsa.task.coordination.domain.product.enums.ProductStatus;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.impl.JPAUpdateClause;
 import jakarta.persistence.EntityManager;
@@ -15,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -38,17 +40,20 @@ public class ProductRepositoryCustom {
     // 브랜드의 카테고리별 최저 상품을 구하는 쿼리
     public List<Product> selectLowestProductsByBrandGroupByCategory(Brand brand) {
         QProduct product = QProduct.product;
-        return jpaQueryFactory.selectFrom(product)
-                .where(product.id.in(
-                        JPAExpressions.select(product.id)
-                                .from(product)
-                                .where(product.brand.eq(brand))
-                                .groupBy(product.category)
-                                .having(product.price.eq(product.price.min()))
-                ))
+
+        List<Product> products = jpaQueryFactory.selectFrom(product)
+                .where(product.brand.eq(brand))
                 .leftJoin(product.category, QCategory.category).fetchJoin()
-                .leftJoin(product.brand, QBrand.brand).fetchJoin()
                 .fetch();
+
+        Map<Category, Product> lowestPriceProductsByCategory = products.stream()
+                .collect(Collectors.toMap(
+                        Product::getCategory,
+                        Function.identity(),
+                        (p1, p2) -> p1.getPrice().compareTo(p2.getPrice()) <= 0 ? p1 : p2
+                ));
+
+        return lowestPriceProductsByCategory.values().stream().toList();
     }
 
     public long updateProductStatusByBrandId(Long id, ProductStatus before, ProductStatus after) {
