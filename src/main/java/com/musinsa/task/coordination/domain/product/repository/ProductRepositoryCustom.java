@@ -1,11 +1,12 @@
 package com.musinsa.task.coordination.domain.product.repository;
 
-import com.musinsa.task.coordination.category.entity.QCategory;
 import com.musinsa.task.coordination.domain.brand.entity.Brand;
-import com.musinsa.task.coordination.domain.category.repository.CategoryRepository;
+import com.musinsa.task.coordination.domain.brand.entity.QBrand;
+import com.musinsa.task.coordination.domain.category.entity.Category;
+import com.musinsa.task.coordination.domain.category.entity.QCategory;
 import com.musinsa.task.coordination.domain.product.entity.Product;
+import com.musinsa.task.coordination.domain.product.entity.QProduct;
 import com.musinsa.task.coordination.domain.product.enums.ProductStatus;
-import com.musinsa.task.coordination.product.entity.QProduct;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.querydsl.jpa.impl.JPAUpdateClause;
@@ -20,14 +21,18 @@ import java.util.List;
 public class ProductRepositoryCustom {
     private final EntityManager entityManager;
     private final JPAQueryFactory jpaQueryFactory;
-    private final CategoryRepository categoryRepository;
 
     public List<Product> selectLowestPerCategoryProducts() {
         QCategory category = QCategory.category;
         return jpaQueryFactory
-                .select(category.lowestProduct)
+                .select(category)
                 .from(category)
-                .fetch();
+                .leftJoin(category.lowestProduct, QProduct.product).fetchJoin()
+                .leftJoin(QProduct.product.brand, QBrand.brand).fetchJoin()
+                .fetch()
+                .stream()
+                .map(Category::getLowestProduct)
+                .toList();
     }
 
     // 브랜드의 카테고리별 최저 상품을 구하는 쿼리
@@ -41,6 +46,8 @@ public class ProductRepositoryCustom {
                                 .groupBy(product.category)
                                 .having(product.price.eq(product.price.min()))
                 ))
+                .leftJoin(product.category, QCategory.category).fetchJoin()
+                .leftJoin(product.brand, QBrand.brand).fetchJoin()
                 .fetch();
     }
 
@@ -62,10 +69,10 @@ public class ProductRepositoryCustom {
                 .execute();
     }
 
-    public boolean hasProductsInAllCategories(Long brandId) {
+    public long hasProductsInAllCategories(Long brandId) {
         // 해당 브랜드의 상품을 카테고리별로 그룹화하여 존재여부 조건
         QProduct product = QProduct.product;
-        long countOfCategoriesWithProducts = jpaQueryFactory
+        return jpaQueryFactory
                 .select(product.category.id, product.count())
                 .from(product)
                 .where(product.brand.id.eq(brandId)
@@ -74,11 +81,5 @@ public class ProductRepositoryCustom {
                 .having(product.count().gt(0))
                 .fetch()
                 .size();
-
-        // 전체 카테고리 수를 가져옴
-        long totalCategoryCount = categoryRepository.count();
-
-        // 브랜드에 해당하는 상품이 각 카테고리별로 최소 하나씩 있는지 확인
-        return countOfCategoriesWithProducts == totalCategoryCount;
     }
 }

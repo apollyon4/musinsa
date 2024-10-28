@@ -4,7 +4,7 @@ import com.musinsa.task.coordination.domain.brand.entity.Brand;
 import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
 import com.musinsa.task.coordination.domain.brand.exception.MissingCategoryProductException;
 import com.musinsa.task.coordination.domain.brand.repository.BrandRepository;
-import com.musinsa.task.coordination.domain.brand.service.BrandService;
+import com.musinsa.task.coordination.domain.brand.service.BrandStatusManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class BrandStatusInitializer implements ApplicationListener<ApplicationReadyEvent> {
-    private final BrandService brandService;
+    private final BrandStatusManager brandStatusManager;
     private final BrandRepository brandRepository;
 
     @Override
@@ -27,7 +27,7 @@ public class BrandStatusInitializer implements ApplicationListener<ApplicationRe
         List<Brand> brands = brandRepository.findAll();
         for (Brand brand : brands) {
             try {
-                brandService.changeStatus(brand, BrandStatus.ACTIVATED);
+                brandStatusManager.changeStatus(brand, BrandStatus.ACTIVATED);
             } catch (MissingCategoryProductException e) {
                 log.error(e.getMessage());
             }

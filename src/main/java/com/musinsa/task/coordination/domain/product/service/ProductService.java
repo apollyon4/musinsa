@@ -2,6 +2,7 @@ package com.musinsa.task.coordination.domain.product.service;
 
 import com.musinsa.task.coordination.domain.brand.entity.Brand;
 import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
+import com.musinsa.task.coordination.domain.brand.exception.NoBrandRecordsFoundException;
 import com.musinsa.task.coordination.domain.brand.repository.BrandRepository;
 import com.musinsa.task.coordination.domain.category.entity.Category;
 import com.musinsa.task.coordination.domain.category.repository.CategoryRepository;
@@ -41,7 +42,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public LowestPriceStyleResponseDto getLowestBrandProducts() {
-        Brand lowestBrand = brandRepository.findFirstByStatusOrderByTotalLowestPriceAsc(BrandStatus.ACTIVATED);
+        Brand lowestBrand = brandRepository.findFirstByStatusOrderByTotalLowestPriceAsc(BrandStatus.ACTIVATED)
+                .orElseThrow(() -> new NoBrandRecordsFoundException("No brand records found"));
         List<Product> products = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(lowestBrand);
 
         ProductListResponseDto productListResponseDto = new ProductListResponseDto(products);
@@ -53,8 +55,7 @@ public class ProductService {
     public CategoryPriceRangeResponseDto getLowestHighestByCategoryProducts(String categoryName) {
         Category category = categoryRepository.findByName(categoryName)
                 .orElseThrow(() -> new CategoryNotFoundException(categoryName));
-        Product lowestProduct = productRepository.findFirstByCategoryAndStatusOrderByPriceAsc(category, ProductStatus.ACTIVATED)
-                .orElseThrow(() -> new CategoryHasNoProductsException(categoryName));
+        Product lowestProduct = category.getLowestProduct();
         Product highestProduct = productRepository.findFirstByCategoryAndStatusOrderByPriceDesc(category, ProductStatus.ACTIVATED)
                 .orElseThrow(() -> new CategoryHasNoProductsException(categoryName));
 

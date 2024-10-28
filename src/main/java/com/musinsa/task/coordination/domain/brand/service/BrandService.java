@@ -6,10 +6,7 @@ import com.musinsa.task.coordination.domain.brand.dto.res.BrandResponseDto;
 import com.musinsa.task.coordination.domain.brand.entity.Brand;
 import com.musinsa.task.coordination.domain.brand.enums.BrandStatus;
 import com.musinsa.task.coordination.domain.brand.exception.BrandNotFoundException;
-import com.musinsa.task.coordination.domain.brand.exception.MissingCategoryProductException;
 import com.musinsa.task.coordination.domain.brand.repository.BrandRepository;
-import com.musinsa.task.coordination.domain.product.entity.Product;
-import com.musinsa.task.coordination.domain.product.enums.ProductStatus;
 import com.musinsa.task.coordination.domain.product.repository.ProductRepository;
 import com.musinsa.task.coordination.domain.product.repository.ProductRepositoryCustom;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BrandService {
     private final BrandRepository brandRepository;
+    private final BrandStatusManager brandStatusManager;
     private final ProductRepositoryCustom productRepositoryCustom;
     private final ProductRepository productRepository;
 
@@ -44,7 +42,7 @@ public class BrandService {
             brand.setName(brandUpdateDto.getName());
         }
         if (ObjectUtils.isNotEmpty(brandUpdateDto.getStatus())) {
-            this.changeStatus(brand, brandUpdateDto.getStatus());
+            brandStatusManager.changeStatus(brand, brandUpdateDto.getStatus());
         }
         return BrandResponseDto.from(brandRepository.save(brand));
     }
@@ -53,44 +51,8 @@ public class BrandService {
     public void deleteBrand(Long brandId) {
         Brand brand = brandRepository.findById(brandId)
                 .orElseThrow(() -> new BrandNotFoundException(brandId));
-        this.changeStatus(brand, BrandStatus.REMOVED);
+        brandStatusManager.changeStatus(brand, BrandStatus.REMOVED);
         brandRepository.save(brand);
-    }
-
-    public void changeStatus(Brand brand, BrandStatus status) {
-        brand.changeStatus(status);
-
-        if (BrandStatus.ACTIVATED.equals(status)) {
-            if (!productRepositoryCustom.hasProductsInAllCategories(brand.getId())) {
-                throw new MissingCategoryProductException(brand.getId());
-            }
-            productRepositoryCustom.updateProductStatusByBrandId(brand.getId(), ProductStatus.STANDBY, ProductStatus.ACTIVATED);
-            List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);
-            // 카테고리별 가장 낮은 금액을 가진 상품을 조회하고 그 상품의 총합을 세팅하는 쿼리
-            brand.setTotalLowestPrice(lowestProducts.stream()
-                    .map(Product::getPrice)
-                    .reduce(0L, Long::sum));
-
-            // 카테고리별 최저 금액 상품을 갱신하는 쿼리
-            lowestProducts.forEach(
-                    product -> product.getCategory().checkLowestProduct(product)
-            );
-        } else if (BrandStatus.REMOVED.equals(status)) {
-            productRepositoryCustom.removeProductsByBrandId(brand.getId());
-            List<Product> lowestProducts = productRepositoryCustom.selectLowestProductsByBrandGroupByCategory(brand);
-            // 카테고리별 최저 금액 상품을 갱신하는 쿼리
-            lowestProducts.forEach(
-                    product -> {
-                        if (!product.getCategory().getLowestProduct().equals(product)) {
-                            return;
-                        }
-                        productRepository.findFirstByCategoryAndStatusOrderByPriceAsc(product.getCategory(), ProductStatus.ACTIVATED)
-                                .ifPresent(lowestProduct ->
-                                        product.getCategory().checkLowestProduct(lowestProduct)
-                                );
-                    }
-            );
-        }
     }
 
     public List<BrandResponseDto> getBrands() {

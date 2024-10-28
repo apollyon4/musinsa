@@ -6,8 +6,8 @@ import com.musinsa.task.coordination.domain.product.entity.Product;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,11 +19,11 @@ public class CategoryPriceRangeResponseDto {
     @JsonProperty("최고가")
     private ProductResponseDto highestProduct;
 
-    public Collection<ProductResponseDto> getLowestProduct() {
+    public List<ProductResponseDto> getLowestProduct() {
         return Collections.singletonList(lowestProduct);
     }
 
-    public Collection<ProductResponseDto> getHighestProduct() {
+    public List<ProductResponseDto> getHighestProduct() {
         return Collections.singletonList(highestProduct);
     }
 
