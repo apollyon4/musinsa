@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>무신사 상품 정보</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="mb-4">무신사 상품 정보</h1>
+
+    <h4>카테고리 별 최저가격 브랜드와 상품 가격, 총액
+        <button class="btn btn-primary" onclick="fetchLowestPriceBrands()">조회</button>
+    </h4>
+
+    <table class="table" id="lowestPriceBrands">
+        <thead>
+        <tr>
+            <th>카테고리</th>
+            <th>브랜드</th>
+            <th>가격</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <p>총액: <span id="totalPrice"></span></p>
+
+    <h4 class="mt-4">단일 브랜드로 모든 카테고리 상품을 구매할 때 최저가격에 판매하는 브랜드와 카테고리의 상품가격, 총액
+        <button class="btn btn-primary" onclick="fetchLowestBrandProducts()">조회</button>
+    </h4>
+    <div id="lowestPriceBrand">
+    </div>
+
+    <h4 class="mt-4">카테고리 이름으로 최저, 최고 가격 브랜드와 상품 가격</h4>
+    <select id="categorySelect" class="form-control mb-2">
+        <option value="">카테고리 선택</option>
+    </select>
+    <div id="categoryPriceRange">
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script th:inline="javascript">
+    $("#categorySelect").change(fetchCategoryPriceRange);
+    $(document).ready(function () {
+        // 카테고리 목록 로드
+        $.get("/api/category", function (categories) {
+            let select = $("#categorySelect");
+            select.empty();
+            select.append('<option value="">카테고리 선택</option>');
+            if (categories && categories.length > 0) {
+                $.each(categories, function (i, category) {
+                    select.append(`<option value="${category["카테고리"]}">${category["카테고리"]}</option>`);
+                });
+            } else {
+                select.append('<option value="">카테고리 없음</option>');
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX call failed: ", textStatus, ", Details: ", errorThrown);
+            console.error("Response: ", jqXHR.responseText);
+            $("#categorySelect").html('<option value="">카테고리를 불러오는데 실패했습니다.</option>');
+        });
+    });
+
+    function fetchLowestPriceBrands() {
+        $.get("/api/product/lowest-per-category", function (data) {
+            let tbody = $("#lowestPriceBrands tbody");
+            tbody.empty();
+            if (data && data["카테고리"]) {
+                $.each(data["카테고리"], function (i, item) {
+                    tbody.append(`<tr><td>${item["카테고리"]}</td><td>${item["브랜드"]}</td><td>${item["가격"]}</td></tr>`);
+                });
+                $("#totalPrice").text(data["총액"]);
+            } else {
+                tbody.append('<tr><td colspan="3">데이터가 없습니다.</td></tr>');
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX call failed: ", textStatus, ", Details: ", errorThrown);
+            console.error("Response: ", jqXHR.responseText);
+            $("#lowestPriceBrands tbody").html('<tr><td colspan="3">데이터를 불러오는데 실패했습니다.</td></tr>');
+        });
+    }
+
+    function fetchLowestBrandProducts() {
+        $.get("/api/product/lowest-brand", function (data) {
+            if (data && data["최저가"]) {
+                let lowestPrice = data["최저가"];
+                let html = `<p>브랜드: ${lowestPrice["브랜드"]}</p>
+                            <p>총액: ${lowestPrice["총액"]}</p>`;
+                $("#lowestPriceBrand").html(html);
+            } else {
+                $("#lowestPriceBrand").html("<p>데이터가 없습니다.</p>");
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX call failed: ", textStatus, ", Details: ", errorThrown);
+            console.error("Response: ", jqXHR.responseText);
+            $("#lowestPriceBrand").html("<p>데이터를 불러오는데 실패했습니다.</p>");
+        });
+    }
+
+    function fetchCategoryPriceRange() {
+        let categoryName = $(this).val();
+        if (categoryName) {
+            $.get(`/api/product/category/${categoryName}/lowest-highest`, function (data) {
+                if (data && data["최저가"] && data["최고가"]) {
+                    let html = `<p>최저가: ${data["최저가"][0]["브랜드"]} (${data["최저가"][0]["가격"]}원)</p>
+                                    <p>최고가: ${data["최고가"][0]["브랜드"]} (${data["최고가"][0]["가격"]}원)</p>`;
+                    $("#categoryPriceRange").html(html);
+                } else {
+                    $("#categoryPriceRange").html("<p>데이터가 없습니다.</p>");
+                }
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.error("AJAX call failed: ", textStatus, ", Details: ", errorThrown);
+                console.error("Response: ", jqXHR.responseText);
+                $("#categoryPriceRange").html("<p>데이터를 불러오는데 실패했습니다.</p>");
+            });
+        } else {
+            $("#categoryPriceRange").html("");
+        }
+    }
+</script>
+</body>
+</html>
